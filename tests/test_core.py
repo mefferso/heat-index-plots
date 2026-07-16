@@ -4,7 +4,7 @@ from datetime import date, datetime, timezone
 import numpy as np
 
 from heat_index.data import ForecastGrid, _extract_grib_messages, daily_maxima, nearest_grid_value
-from heat_index.map_renderer import cwa_mask, render_map
+from heat_index.map_renderer import cwa_mask, render_map, smooth_field
 
 
 def synthetic_grid():
@@ -49,6 +49,13 @@ class CoreTests(unittest.TestCase):
         )
         self.assertTrue(png.startswith(b"\x89PNG"))
         self.assertGreater(len(png), 100_000)
+
+    def test_smoothing_reduces_grid_noise(self):
+        field = np.zeros((7, 7), dtype=float)
+        field[3, 3] = 16
+        smoothed = smooth_field(field, passes=1)
+        self.assertLess(smoothed[3, 3], field[3, 3])
+        self.assertAlmostEqual(float(smoothed.sum()), float(field.sum()))
 
 
 if __name__ == "__main__":
