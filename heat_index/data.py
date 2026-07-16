@@ -38,9 +38,39 @@ def _download(url: str, target: Path, timeout: int = 90) -> None:
     )
     with urllib.request.urlopen(request, timeout=timeout) as response:
         payload = response.read()
-    if len(payload) < 1_000 or not payload.startswith(b"GRIB"):
-        raise RuntimeError(f"NDFD returned an invalid GRIB file from {url}")
-    target.write_bytes(payload)
+    target.write_bytes(_extract_grib_messages(payload, url))
+
+
+def _extract_grib_messages(payload: bytes, source: str = "NDFD response") -> bytes:
+    """Remove TGFTP/WMO bulletin envelopes and return pure GRIB2 messages.
+
+    NDFD ``ds.*.bin`` files are transmitted as a collection of WMO bulletins.
+    Each GRIB2 message is preceded by a text header, so the downloaded file does
+    not begin with the bytes ``GRIB`` even though the forecast itself is valid.
+    ecCodes is most reliable when those transport headers are removed.
+    """
+    messages: list[bytes] = []
+    cursor = 0
+    while True:
+        marker = payload.find(b"GRIB", cursor)
+        if marker < 0:
+            break
+        if marker + 16 > len(payload) or payload[marker + 7] != 2:
+            cursor = marker + 4
+            continue
+        message_length = int.from_bytes(payload[marker + 8 : marker + 16], "big")
+        end = marker + message_length
+        if message_length < 20 or end > len(payload):
+            raise RuntimeError(f"NDFD returned a truncated GRIB2 message from {source}")
+        message = payload[marker:end]
+        if not message.endswith(b"7777"):
+            raise RuntimeError(f"NDFD returned a malformed GRIB2 message from {source}")
+        messages.append(message)
+        cursor = end
+    cleaned = b"".join(messages)
+    if len(cleaned) < 20 or not messages:
+        raise RuntimeError(f"NDFD returned no usable GRIB2 messages from {source}")
+    return cleaned
 
 
 def _as_fahrenheit(values: np.ndarray, units: str) -> np.ndarray:
@@ -157,4 +187,3 @@ def nearest_grid_value(longitude, latitude, field, lon: float, lat: float) -> fl
     distance = (longitude - lon) ** 2 + (latitude - lat) ** 2
     row, column = np.unravel_index(np.nanargmin(distance), distance.shape)
     return float(field[row, column])
-
