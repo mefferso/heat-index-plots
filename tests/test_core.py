@@ -3,6 +3,7 @@ from datetime import date, datetime, timezone
 
 import numpy as np
 
+from heat_index.config import CITIES
 from heat_index.data import ForecastGrid, _extract_grib_messages, daily_maxima, nearest_grid_value
 from heat_index.map_renderer import cwa_mask, render_map, smooth_field
 
@@ -19,6 +20,16 @@ def synthetic_grid():
 
 
 class CoreTests(unittest.TestCase):
+    def test_reference_sites_use_operational_coordinates(self):
+        by_name = {site["name"]: site for site in CITIES}
+        self.assertNotIn("Bay St. Louis", by_name)
+        self.assertEqual(by_name["Gulfport"]["station"], "KGPT")
+        self.assertEqual(by_name["Gonzales"]["station"], "KREG")
+        self.assertEqual(by_name["New Orleans"]["station"], "KMSY")
+        self.assertAlmostEqual(by_name["New Orleans"]["lat"], 29.99739, places=5)
+        self.assertAlmostEqual(by_name["New Orleans"]["lon"], -90.27773, places=5)
+        self.assertIsNone(by_name["Woodville"]["station"])
+
     def test_wmo_headers_are_removed_from_grib_messages(self):
         message = b"GRIB" + b"\x00\x00\x00\x02" + (24).to_bytes(8, "big") + b"DATA7777"
         wrapped = b"****0000000044****\nYTIB18 KWBN 161647\r\r\n" + message
