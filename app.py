@@ -62,7 +62,11 @@ with st.sidebar:
     subtitle = st.text_input("Subtitle (optional)", "")
     st.divider()
     show_cities = st.toggle("Show reference cities", True)
-    city_detail = st.selectbox("City detail", ("Key cities", "All reference cities"), disabled=not show_cities)
+    city_detail = st.selectbox(
+        "Reference sites",
+        ("All reference sites", "Key airport sites"),
+        disabled=not show_cities,
+    )
     show_values = st.toggle("Show city value panel", True, disabled=not show_cities)
     show_counties = st.toggle("Show parish/county lines", True)
     dpi = st.select_slider("Export quality", options=(100, 150, 200), value=150, format_func=lambda x: f"{x} dpi")
@@ -135,5 +139,7 @@ with st.expander("Forecast and data details"):
     st.markdown(
         "Source: [National Digital Forecast Database — Apparent Temperature]"
         "(https://tgftp.nws.noaa.gov/SL.us008001/ST.opnl/DF.gr2/DC.ndfd/AR.smissvly/). "
-        "Daily maxima are calculated by local calendar day in America/Chicago."
+        "Daily maxima are calculated by local calendar day in America/Chicago. "
+        "Airport reference points use [NWS Aviation Weather Center station data]"
+        "(https://aviationweather.gov/data/api/); Woodville is sampled at the town center."
     )
