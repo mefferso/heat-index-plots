@@ -106,7 +106,7 @@ def render_map(
     show_cities: bool = True,
     show_city_values: bool = True,
     show_counties: bool = True,
-    city_detail: str = "Key cities",
+    city_detail: str = "All reference sites",
     format_name: str = "Social media (16:9)",
     dpi: int = 150,
 ) -> bytes:
@@ -179,7 +179,8 @@ def render_map(
         _draw_boundaries(ax, counties, "#1f2529", 0.65, 0.58, 5)
     _draw_boundaries(ax, cwa, "#050505", 2.2, 1.0, 6)
 
-    displayed_cities = [city for city in CITIES if city_detail == "All reference cities" or city["tier"] == "key"]
+    show_all_sites = city_detail in {"All reference cities", "All reference sites"}
+    displayed_cities = [city for city in CITIES if show_all_sites or city["tier"] == "key"]
     if show_cities:
         for city in displayed_cities:
             ax.scatter(
@@ -218,11 +219,14 @@ def render_map(
         for city, y in zip(displayed_cities, row_y):
             value = nearest_grid_value(longitude, latitude, values_f, city["lon"], city["lat"])
             panel.text(0.09, y, city["name"], fontsize=11.5, color="#263238", va="center")
+            site_label = city["station"] or "town center"
+            panel.text(0.66, y, site_label, fontsize=8.5, color="#6a7a85", ha="right", va="center")
             panel.text(0.91, y, f"{value:.0f}°", fontsize=14, color="#b83b14", fontweight="bold", ha="right", va="center")
     else:
         panel.text(0.09, 0.76, "Official NDFD apparent-temperature\nforecast for southeast Louisiana and\nsouthern Mississippi.", fontsize=11.5, color="#37474f", va="top", linespacing=1.55)
     panel.plot([0.07, 0.93], [0.125, 0.125], color="#c4cdd3", linewidth=0.9)
-    panel.text(0.07, 0.09, "Values in °F • Nearest NDFD grid point", fontsize=9.3, color="#60717d", va="center")
+    panel.text(0.07, 0.095, "Airport reference points • Woodville town center", fontsize=8.2, color="#60717d", va="center")
+    panel.text(0.07, 0.065, "Values in °F • Nearest NDFD grid point", fontsize=8.2, color="#60717d", va="center")
 
     colorbar_ax = fig.add_axes([0.14, 0.072, 0.72, 0.027])
     colorbar = fig.colorbar(filled, cax=colorbar_ax, orientation="horizontal", ticks=LEVELS)
