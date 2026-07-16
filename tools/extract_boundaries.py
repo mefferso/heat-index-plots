@@ -157,6 +157,14 @@ def main():
         lambda row: row["CWA"] == "LIX",
         ("STATE", "COUNTYNAME", "FIPS"),
     )
+    regional_counties = feature_collection(
+        UPLOAD / "c_16ap26(1).shp",
+        UPLOAD / "c_16ap26(1).dbf",
+        lambda row: row["STATE"] in {"LA", "MS", "AL"}
+        and -92.7 <= float(row["LON"]) <= -87.7
+        and 28.4 <= float(row["LAT"]) <= 31.9,
+        ("STATE", "CWA", "COUNTYNAME", "FIPS"),
+    )
     cwa = feature_collection(
         UPLOAD / "w_16ap26(1).shp",
         UPLOAD / "w_16ap26(1).dbf",
@@ -166,10 +174,10 @@ def main():
     states = feature_collection(
         UPLOAD / "s_16ap26(1).shp",
         UPLOAD / "s_16ap26(1).dbf",
-        lambda row: row["STATE"] in {"LA", "MS"},
+        lambda row: row["STATE"] in {"LA", "MS", "AL"},
         ("STATE", "NAME"),
     )
-    for name, content in (("lix_counties", counties), ("lix_cwa", cwa), ("states", states)):
+    for name, content in (("lix_counties", counties), ("regional_counties", regional_counties), ("lix_cwa", cwa), ("states", states)):
         (assets / f"{name}.geojson").write_text(json.dumps(content, separators=(",", ":")))
         print(name, len(content["features"]), (assets / f"{name}.geojson").stat().st_size)
 
