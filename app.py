@@ -62,7 +62,8 @@ with st.sidebar:
     subtitle = st.text_input("Subtitle (optional)", "")
     st.divider()
     show_cities = st.toggle("Show reference cities", True)
-    show_values = st.toggle("Show city forecast values", True, disabled=not show_cities)
+    city_detail = st.selectbox("City detail", ("Key cities", "All reference cities"), disabled=not show_cities)
+    show_values = st.toggle("Show city value panel", True, disabled=not show_cities)
     show_counties = st.toggle("Show parish/county lines", True)
     dpi = st.select_slider("Export quality", options=(100, 150, 200), value=150, format_func=lambda x: f"{x} dpi")
 
@@ -78,6 +79,7 @@ png = render_map(
     show_cities=show_cities,
     show_city_values=show_values,
     show_counties=show_counties,
+    city_detail=city_detail,
     format_name=output_format,
     dpi=dpi,
 )
@@ -112,6 +114,7 @@ with right:
                         show_cities=show_cities,
                         show_city_values=show_values,
                         show_counties=show_counties,
+                        city_detail=city_detail,
                         format_name=output_format,
                         dpi=dpi,
                     )
@@ -134,4 +137,3 @@ with st.expander("Forecast and data details"):
         "(https://tgftp.nws.noaa.gov/SL.us008001/ST.opnl/DF.gr2/DC.ndfd/AR.smissvly/). "
         "Daily maxima are calculated by local calendar day in America/Chicago."
     )
-
